@@ -88,15 +88,16 @@ export function PhotoPrintStudio() {
     <main className="studio-shell">
       <div className="studio-frame">
         <header className="studio-header">
-          <h1>Passport Photo Print Studio</h1>
-          <p>
-            Mobile-ready passport print layout with upload, quick quantity selection, drag setup,
-            and one-tap printing.
-          </p>
+          <div className="header-copy">
+            <span className="header-kicker">Passport Print Lab</span>
+           
+           
+          </div>
+          
         </header>
 
         <div className="studio-grid">
-          <aside className="panel controls-panel">
+          <aside className="panel controls-panel upload-panel">
             <div className="mobile-summary-bar">
               <div className="summary-pill">
                 <strong>{settings.quantity}</strong>
@@ -138,7 +139,31 @@ export function PhotoPrintStudio() {
                 </div>
               </div>
             </section>
+          </aside>
 
+          <section className="panel workspace-panel">
+            <div className="workspace-topbar">
+              <div>
+                <h2>Paper preview</h2>
+                <p>
+                  Passport {settings.paperSize} {settings.orientation}, {settings.quantity} copies
+                </p>
+              </div>
+              <p className="print-note">Mobile fit preview</p>
+            </div>
+
+            <PaperCanvas
+              imageUrl={imageUrl}
+              items={items}
+              orientation={settings.orientation}
+              paper={paper}
+              crop={crop}
+              borderColor={settings.showBorder ? settings.borderColor : "transparent"}
+              borderWidth={settings.showBorder ? settings.borderWidth : 0}
+            />
+          </section>
+
+          <aside className="panel controls-panel settings-panel">
             <section className="controls-group">
               <div className="section-label">
                 <span className="mini-badge">ST</span>
@@ -302,28 +327,6 @@ export function PhotoPrintStudio() {
               </p>
             </section>
           </aside>
-
-          <section className="panel workspace-panel">
-            <div className="workspace-topbar">
-              <div>
-                <h2>Paper preview</h2>
-                <p>
-                  Passport {settings.paperSize} {settings.orientation}, {settings.quantity} copies
-                </p>
-              </div>
-              <p className="print-note">Mobile fit preview</p>
-            </div>
-
-            <PaperCanvas
-              imageUrl={imageUrl}
-              items={items}
-              orientation={settings.orientation}
-              paper={paper}
-              crop={crop}
-              borderColor={settings.showBorder ? settings.borderColor : "transparent"}
-              borderWidth={settings.showBorder ? settings.borderWidth : 0}
-            />
-          </section>
         </div>
       </div>
       {imageUrl ? (
