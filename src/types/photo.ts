@@ -1,4 +1,4 @@
-export type PaperSize = "A4" | "Letter";
+export type PaperSize = "A3" | "A4" | "A5" | "A6" | "Letter" | "Legal" | "4R";
 export type PaperOrientation = "portrait" | "landscape";
 
 export interface LayoutItem {

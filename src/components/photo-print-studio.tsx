@@ -7,7 +7,7 @@ import { CropSettings, PaperOrientation, PaperSize, PrintSettings } from "@/type
 import { CropModal } from "./crop-modal";
 import { PaperCanvas } from "./paper-canvas";
 
-const QUANTITY_OPTIONS = [4, 6, 8, 12, 16];
+const QUANTITY_OPTIONS = [4, 6, 8, 10, 12, 16, 20];
 
 const DEFAULT_SETTINGS: PrintSettings = {
   quantity: 4,
@@ -19,15 +19,11 @@ const DEFAULT_SETTINGS: PrintSettings = {
   margin: 0.13 * 96
 };
 
-const DEFAULT_CROP: CropSettings = {
-  top: 0,
-  right: 0,
-  bottom: 0,
-  left: 0
-};
+const DEFAULT_CROP: CropSettings = { top: 0, right: 0, bottom: 0, left: 0 };
 
 type SettingsTab = "count" | "paper" | "border" | "print";
 
+// ─── Icons ───────────────────────────────────────────────
 function GridIcon() {
   return (
     <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -69,9 +65,19 @@ function PrinterIcon() {
 
 function CamIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
       <circle cx="12" cy="13" r="4"/>
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 16 12 12 8 16"/>
+      <line x1="12" y1="12" x2="12" y2="21"/>
+      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
     </svg>
   );
 }
@@ -88,18 +94,18 @@ function CutIcon() {
   );
 }
 
+// ─── Component ───────────────────────────────────────────
 export function PhotoPrintStudio() {
   const [settings, setSettings] = useState<PrintSettings>(DEFAULT_SETTINGS);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState<CropSettings>(DEFAULT_CROP);
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<SettingsTab>("count");
+  const [customQty, setCustomQty] = useState<string>("");
   const { items, paper, resetLayout } = usePaperLayout(settings);
 
   useEffect(() => {
-    return () => {
-      if (imageUrl) URL.revokeObjectURL(imageUrl);
-    };
+    return () => { if (imageUrl) URL.revokeObjectURL(imageUrl); };
   }, [imageUrl]);
 
   useEffect(() => {
@@ -114,11 +120,26 @@ export function PhotoPrintStudio() {
   const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    // Reset input so same file can be re-selected
+    event.target.value = "";
     setImageUrl((current) => {
       if (current) URL.revokeObjectURL(current);
       return getObjectUrl(file);
     });
     setCrop(DEFAULT_CROP);
+  };
+
+  const handleCustomQty = (raw: string) => {
+    setCustomQty(raw);
+    const n = parseInt(raw, 10);
+    if (!isNaN(n) && n >= 1 && n <= 50) {
+      updateSettings("quantity", n);
+    }
+  };
+
+  const stepBorder = (delta: number) => {
+    const next = Math.round((settings.borderWidth + delta) * 10) / 10;
+    updateSettings("borderWidth", Math.min(20, Math.max(0, next)));
   };
 
   const handlePrint = () => window.print();
@@ -131,7 +152,7 @@ export function PhotoPrintStudio() {
         </header>
 
         <div className="studio-grid">
-          {/* Upload Panel */}
+          {/* ── Upload Panel ── */}
           <aside className="panel controls-panel upload-panel">
             <div className="upload-bar">
               <div className="upload-thumb-wrap">
@@ -143,15 +164,30 @@ export function PhotoPrintStudio() {
               </div>
               <div className="upload-info">
                 <span className="upload-info-title">
-                  {imageUrl ? "Photo ready" : "No photo selected"}
+                  {imageUrl ? "Photo ready" : "No photo"}
                 </span>
                 <span className="upload-info-sub">
-                  {imageUrl ? "Tap Change to update" : "Select a passport photo"}
+                  {imageUrl ? "Tap to change" : "Upload or take photo"}
                 </span>
               </div>
               <div className="upload-btn-row">
-                <label className="secondary-button upload-file-label" htmlFor="photo-upload">
-                  {imageUrl ? "Change" : "Upload"}
+                {/* Camera capture */}
+                <label className="icon-action-btn" htmlFor="photo-capture" title="Take photo">
+                  <CamIcon />
+                  <span>Camera</span>
+                </label>
+                <input
+                  id="photo-capture"
+                  accept="image/*"
+                  capture="environment"
+                  className="upload-file-input"
+                  type="file"
+                  onChange={handleImageUpload}
+                />
+                {/* File upload */}
+                <label className="icon-action-btn" htmlFor="photo-upload" title="Upload photo">
+                  <UploadIcon />
+                  <span>Upload</span>
                 </label>
                 <input
                   id="photo-upload"
@@ -160,10 +196,12 @@ export function PhotoPrintStudio() {
                   type="file"
                   onChange={handleImageUpload}
                 />
+                {/* Crop */}
                 <button
-                  className="secondary-button crop-action-btn"
+                  className="icon-action-btn"
                   disabled={!imageUrl}
                   type="button"
+                  title="Crop photo"
                   onClick={() => setIsCropOpen(true)}
                 >
                   <CutIcon />
@@ -173,7 +211,7 @@ export function PhotoPrintStudio() {
             </div>
           </aside>
 
-          {/* Workspace / Preview */}
+          {/* ── Preview ── */}
           <section className="panel workspace-panel">
             <div className="workspace-topbar">
               <div>
@@ -193,75 +231,87 @@ export function PhotoPrintStudio() {
             />
           </section>
 
-          {/* Settings Panel */}
+          {/* ── Settings Panel ── */}
           <aside className="panel controls-panel settings-panel">
             <div className="settings-tabbar">
-              <button
-                className={`settings-tab ${activeTab === "count" ? "active" : ""}`}
-                type="button"
-                onClick={() => setActiveTab("count")}
-              >
-                <span className="settings-tab-icon"><GridIcon /></span>
-                <span className="settings-tab-text">Count</span>
-              </button>
-              <button
-                className={`settings-tab ${activeTab === "paper" ? "active" : ""}`}
-                type="button"
-                onClick={() => setActiveTab("paper")}
-              >
-                <span className="settings-tab-icon"><DocIcon /></span>
-                <span className="settings-tab-text">Paper</span>
-              </button>
-              <button
-                className={`settings-tab ${activeTab === "border" ? "active" : ""}`}
-                type="button"
-                onClick={() => setActiveTab("border")}
-              >
-                <span className="settings-tab-icon"><FrameIcon /></span>
-                <span className="settings-tab-text">Border</span>
-              </button>
-              <button
-                className={`settings-tab ${activeTab === "print" ? "active" : ""}`}
-                type="button"
-                onClick={() => setActiveTab("print")}
-              >
-                <span className="settings-tab-icon"><PrinterIcon /></span>
-                <span className="settings-tab-text">Print</span>
-              </button>
+              {(["count", "paper", "border", "print"] as SettingsTab[]).map((tab) => (
+                <button
+                  key={tab}
+                  className={`settings-tab ${activeTab === tab ? "active" : ""}`}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                >
+                  <span className="settings-tab-icon">
+                    {tab === "count"  && <GridIcon />}
+                    {tab === "paper"  && <DocIcon />}
+                    {tab === "border" && <FrameIcon />}
+                    {tab === "print"  && <PrinterIcon />}
+                  </span>
+                  <span className="settings-tab-text">
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </span>
+                </button>
+              ))}
             </div>
 
             <div className="settings-card">
-              {activeTab === "count" ? (
+              {/* ── Count tab ── */}
+              {activeTab === "count" && (
                 <div className="field-grid">
                   <div className="field-row">
                     <label>Photo count</label>
                     <div className="chip-grid">
-                      {QUANTITY_OPTIONS.map((option) => (
+                      {QUANTITY_OPTIONS.map((opt) => (
                         <button
-                          key={option}
-                          className={`chip-button ${settings.quantity === option ? "active" : ""}`}
+                          key={opt}
+                          className={`chip-button ${settings.quantity === opt && !customQty ? "active" : ""}`}
                           type="button"
-                          onClick={() => updateSettings("quantity", option)}
+                          onClick={() => { setCustomQty(""); updateSettings("quantity", opt); }}
                         >
-                          {option}
+                          {opt}
                         </button>
                       ))}
                     </div>
                   </div>
+                  <div className="field-row">
+                    <label htmlFor="custom-qty">Custom count (1–50)</label>
+                    <input
+                      id="custom-qty"
+                      className="qty-input"
+                      type="number"
+                      min={1}
+                      max={50}
+                      placeholder="e.g. 9"
+                      value={customQty}
+                      onChange={(e) => handleCustomQty(e.target.value)}
+                    />
+                  </div>
                 </div>
-              ) : null}
+              )}
 
-              {activeTab === "paper" ? (
+              {/* ── Paper tab ── */}
+              {activeTab === "paper" && (
                 <div className="field-grid">
                   <div className="field-row">
-                    <label htmlFor="paper-size">Size</label>
+                    <label htmlFor="paper-size">Paper size</label>
                     <select
                       id="paper-size"
                       value={settings.paperSize}
                       onChange={(e) => updateSettings("paperSize", e.target.value as PaperSize)}
                     >
-                      <option value="A4">A4</option>
-                      <option value="Letter">Letter</option>
+                      <optgroup label="ISO">
+                        <option value="A3">A3 (297 × 420 mm)</option>
+                        <option value="A4">A4 (210 × 297 mm)</option>
+                        <option value="A5">A5 (148 × 210 mm)</option>
+                        <option value="A6">A6 (105 × 148 mm)</option>
+                      </optgroup>
+                      <optgroup label="US">
+                        <option value="Letter">Letter (8.5 × 11 in)</option>
+                        <option value="Legal">Legal (8.5 × 14 in)</option>
+                      </optgroup>
+                      <optgroup label="Photo">
+                        <option value="4R">4R (4 × 6 in)</option>
+                      </optgroup>
                     </select>
                   </div>
                   <div className="field-row">
@@ -276,14 +326,15 @@ export function PhotoPrintStudio() {
                     </select>
                   </div>
                 </div>
-              ) : null}
+              )}
 
-              {activeTab === "border" ? (
+              {/* ── Border tab ── */}
+              {activeTab === "border" && (
                 <div className="field-grid">
                   <div className="toggle-row">
-                    <label htmlFor="border">Show border</label>
+                    <label htmlFor="border-toggle">Show border</label>
                     <input
-                      id="border"
+                      id="border-toggle"
                       checked={settings.showBorder}
                       type="checkbox"
                       onChange={(e) => updateSettings("showBorder", e.target.checked)}
@@ -308,20 +359,28 @@ export function PhotoPrintStudio() {
                     </div>
                   </div>
                   <div className="field-row">
-                    <label htmlFor="border-width">Weight: {settings.borderWidth}px</label>
-                    <input
-                      id="border-width"
-                      max={20}
-                      min={0}
-                      type="range"
-                      value={settings.borderWidth}
-                      onChange={(e) => updateSettings("borderWidth", Number(e.target.value))}
-                    />
+                    <label>Weight: {settings.borderWidth.toFixed(1)} px</label>
+                    <div className="stepper-row">
+                      <button
+                        className="stepper-btn"
+                        type="button"
+                        disabled={settings.borderWidth <= 0}
+                        onClick={() => stepBorder(-0.2)}
+                      >−</button>
+                      <span className="stepper-value">{settings.borderWidth.toFixed(1)}</span>
+                      <button
+                        className="stepper-btn"
+                        type="button"
+                        disabled={settings.borderWidth >= 20}
+                        onClick={() => stepBorder(0.2)}
+                      >+</button>
+                    </div>
                   </div>
                 </div>
-              ) : null}
+              )}
 
-              {activeTab === "print" ? (
+              {/* ── Print tab ── */}
+              {activeTab === "print" && (
                 <div className="field-grid">
                   <div className="button-row">
                     <button className="secondary-button" type="button" onClick={resetLayout}>
@@ -340,13 +399,13 @@ export function PhotoPrintStudio() {
                     Default margin: 0.13 inch top, left, right.
                   </p>
                 </div>
-              ) : null}
+              )}
             </div>
           </aside>
         </div>
       </div>
 
-      {imageUrl ? (
+      {imageUrl && (
         <CropModal
           crop={crop}
           imageUrl={imageUrl}
@@ -354,7 +413,7 @@ export function PhotoPrintStudio() {
           onChange={setCrop}
           onClose={() => setIsCropOpen(false)}
         />
-      ) : null}
+      )}
     </main>
   );
 }

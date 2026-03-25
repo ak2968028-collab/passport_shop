@@ -184,21 +184,94 @@ button {
   display: none;
 }
 
-.upload-file-label {
+/* Upload action buttons (camera / upload / crop) */
+.icon-action-btn {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 3px;
+  min-width: 56px;
+  padding: 8px 10px;
+  border: 1px solid #ccbda9;
+  border-radius: 12px;
+  background: #fffdfa;
+  color: var(--text);
+  font-size: 0.68rem;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 0.88rem;
-  padding: 9px 14px;
+  transition: background 140ms ease, transform 140ms ease;
+  letter-spacing: 0.02em;
 }
 
-.crop-action-btn {
-  display: inline-flex;
+.icon-action-btn:hover {
+  background: #f3e8da;
+  transform: translateY(-1px);
+}
+
+.icon-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Border stepper */
+.stepper-row {
+  display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.88rem;
-  padding: 9px 14px;
+  gap: 0;
+  border: 1px solid #ccbda9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fffdfa;
+}
+
+.stepper-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  transition: background 140ms ease;
+}
+
+.stepper-btn:hover:not(:disabled) {
+  background: rgba(216, 111, 69, 0.12);
+}
+
+.stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.stepper-value {
+  flex: 1;
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+  padding: 0 4px;
+  border-left: 1px solid #e0d0bf;
+  border-right: 1px solid #e0d0bf;
+}
+
+/* Custom qty input */
+.qty-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccbda9;
+  border-radius: 12px;
+  background: #fffdfa;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.qty-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 /* ─── Settings ─── */
@@ -333,7 +406,7 @@ button {
 
 .chip-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -795,12 +868,18 @@ button {
     font-size: 0.7rem;
   }
 
-  .upload-file-label,
-  .crop-action-btn {
-    padding: 6px 10px;
-    font-size: 0.78rem;
-    border-radius: 999px;
-    min-height: 0;
+  /* Compact 3-button row on mobile */
+  .icon-action-btn {
+    min-width: 44px;
+    padding: 5px 6px;
+    font-size: 0.6rem;
+    border-radius: 9px;
+    gap: 2px;
+  }
+
+  .icon-action-btn svg {
+    width: 16px;
+    height: 16px;
   }
 
   /* Hide workspace topbar on mobile — info already in settings panel */
@@ -889,14 +968,34 @@ button {
   }
 
   .chip-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 5px;
   }
 
   .chip-button {
     min-height: 30px;
-    font-size: 0.84rem;
+    font-size: 0.82rem;
     border-radius: 8px;
+  }
+
+  .stepper-row {
+    border-radius: 9px;
+  }
+
+  .stepper-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 1.1rem;
+  }
+
+  .stepper-value {
+    font-size: 0.86rem;
+  }
+
+  .qty-input {
+    padding: 6px 10px;
+    font-size: 0.86rem;
+    border-radius: 9px;
   }
 
   .toggle-row {
