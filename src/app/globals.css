@@ -702,7 +702,7 @@ button {
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    padding: 7px 14px;
+    padding: 6px 14px;
     margin-bottom: 0;
     border-radius: 0;
     border: 0;
@@ -715,20 +715,21 @@ button {
   .header-kicker {
     margin-bottom: 0;
     font-size: 0.68rem;
-    padding: 4px 8px;
+    padding: 3px 8px;
   }
 
-  /* Grid → flex column */
+  /* Grid → flex column — override desktop align-items: start */
   .studio-grid {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: 0;
     overflow: hidden;
   }
 
-  /* Panel order: upload → preview → settings */
+  /* Panel order: upload (1) → settings/tools (2) → preview (3 at bottom) */
   .upload-panel {
     order: 1;
     flex-shrink: 0;
@@ -741,28 +742,30 @@ button {
     background: linear-gradient(180deg, rgba(255, 249, 240, 0.98), rgba(250, 242, 231, 0.98));
   }
 
-  .workspace-panel {
-    order: 2;
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    border-radius: 0;
-    border: 0;
-    padding: 6px 8px;
-    display: flex;
-    flex-direction: column;
-  }
-
   .settings-panel {
-    order: 3;
+    order: 2;
     flex-shrink: 0;
     border-radius: 0;
     border-left: 0;
     border-right: 0;
-    border-bottom: 0;
-    border-top: 1px solid var(--line);
+    border-top: 0;
+    border-bottom: 1px solid var(--line);
     padding: 8px 10px;
     background: linear-gradient(180deg, rgba(255, 249, 240, 0.96), rgba(248, 238, 225, 0.98));
+  }
+
+  .workspace-panel {
+    order: 3;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 0;
+    border: 0;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    background: #ede4d8;
   }
 
   .controls-panel {
@@ -800,56 +803,42 @@ button {
     min-height: 0;
   }
 
-  /* Workspace fills remaining height */
+  /* Hide workspace topbar on mobile — info already in settings panel */
   .workspace-topbar {
-    flex-shrink: 0;
-    padding: 0 2px 5px;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+    display: none;
   }
 
-  .workspace-topbar h2 {
-    font-size: 0.95rem;
-    margin: 0 0 2px;
-  }
-
-  .workspace-topbar p {
-    font-size: 0.74rem;
-  }
-
-  .print-note {
-    font-size: 0.72rem;
-    padding: 5px 9px;
-    background: #efe0d2;
-  }
-
+  /* Paper stage: fills remaining height, JS computes paper size */
   .paper-stage {
     flex: 1;
     min-height: 0;
-    padding: 5px;
+    padding: 6px;
     border-radius: 10px;
     display: flex;
-    flex-direction: column;
+    align-items: center;
     justify-content: center;
     overflow: hidden;
   }
 
+  /* CSS fallback before JS ResizeObserver fires */
   .paper-sheet {
     width: 100%;
-    max-height: 100%;
+    height: auto;
+    aspect-ratio: 794 / 1123;
+    margin: 0;
   }
 
   .paper-sheet.landscape {
     width: 100%;
+    height: auto;
+    aspect-ratio: 1123 / 794;
   }
 
-  /* Settings tabs – compact with icons */
+  /* Settings tabs – icon style, compact */
   .settings-tabbar {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 5px;
-    margin-bottom: 7px;
+    margin-bottom: 6px;
     position: static;
     padding: 0;
     background: transparent;
@@ -858,45 +847,45 @@ button {
   }
 
   .settings-tab {
-    min-height: 48px;
-    padding: 6px 4px;
+    min-height: 46px;
+    padding: 5px 4px;
     border-radius: 10px;
-    gap: 3px;
+    gap: 2px;
   }
 
   .settings-tab-icon {
-    width: 26px;
-    height: 26px;
-    border-radius: 6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
   }
 
   .settings-tab-text {
-    font-size: 0.63rem;
+    font-size: 0.6rem;
   }
 
   .settings-card {
     border-radius: 10px;
-    padding: 9px;
+    padding: 8px;
     box-shadow: none;
   }
 
   .field-grid {
-    gap: 7px;
+    gap: 6px;
   }
 
   .field-row {
-    gap: 5px;
+    gap: 4px;
   }
 
   .field-row label {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
   }
 
   .field-row input,
   .field-row select {
-    padding: 7px 10px;
-    border-radius: 9px;
-    font-size: 0.88rem;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.86rem;
   }
 
   .chip-grid {
@@ -905,22 +894,22 @@ button {
   }
 
   .chip-button {
-    min-height: 32px;
-    font-size: 0.85rem;
-    border-radius: 9px;
+    min-height: 30px;
+    font-size: 0.84rem;
+    border-radius: 8px;
   }
 
   .toggle-row {
-    padding: 7px 10px;
-    border-radius: 9px;
+    padding: 6px 10px;
+    border-radius: 8px;
   }
 
   .toggle-row label {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
   }
 
   .color-input {
-    height: 36px;
+    height: 32px;
   }
 
   .button-row {
@@ -931,14 +920,14 @@ button {
 
   .primary-button,
   .secondary-button {
-    min-height: 36px;
-    padding: 8px 12px;
-    font-size: 0.84rem;
+    min-height: 34px;
+    padding: 7px 12px;
+    font-size: 0.82rem;
   }
 
   .helper-text {
-    font-size: 0.76rem;
-    margin-top: 5px;
+    font-size: 0.72rem;
+    margin-top: 4px;
   }
 
   /* Crop modal */

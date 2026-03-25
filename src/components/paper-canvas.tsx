@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { CropSettings, LayoutItem, PaperDimensions } from "@/types/photo";
 
 interface PaperCanvasProps {
@@ -21,10 +22,50 @@ export function PaperCanvas({
   borderColor,
   borderWidth
 }: PaperCanvasProps) {
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [fitSize, setFitSize] = useState<{ width: number; height: number } | null>(null);
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+
+    const compute = (stageW: number, stageH: number) => {
+      if (stageW <= 0 || stageH <= 0) return;
+
+      const isLandscape = orientation === "landscape";
+      // ratio = paperWidth / paperHeight
+      const ratio = isLandscape ? 1123 / 794 : 794 / 1123;
+      // Cap at actual paper pixel dimensions (no upscale beyond real size)
+      const maxW = isLandscape ? 1123 : 794;
+      const pad = 12;
+      const aw = Math.min(stageW - pad, maxW);
+      const ah = stageH - pad;
+
+      // Fit by width first; if too tall, fit by height instead
+      const byWidth = { width: aw, height: aw / ratio };
+      const size = byWidth.height <= ah
+        ? byWidth
+        : { width: ah * ratio, height: ah };
+
+      setFitSize({
+        width: Math.floor(size.width),
+        height: Math.floor(size.height)
+      });
+    };
+
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      compute(width, height);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [orientation]);
+
   return (
-    <div className="paper-stage">
+    <div ref={stageRef} className="paper-stage">
       <div
         className={`paper-sheet ${orientation === "landscape" ? "landscape" : ""}`}
+        style={fitSize ? { width: fitSize.width, height: fitSize.height } : undefined}
       >
         <div className="paper-guides" />
         {items.map((item) => (
@@ -43,19 +84,14 @@ export function PaperCanvas({
                 <img
                   alt={`Passport print ${item.id}`}
                   src={imageUrl}
-                  style={{
-                    ...getCropImageStyle(crop)
-                  }}
+                  style={{ ...getCropImageStyle(crop) }}
                 />
               </div>
             ) : null}
             {borderWidth > 0 && imageUrl ? (
               <div
                 className="photo-border"
-                style={{
-                  borderColor,
-                  borderWidth: `${borderWidth}px`
-                }}
+                style={{ borderColor, borderWidth: `${borderWidth}px` }}
               />
             ) : null}
           </div>
@@ -72,7 +108,6 @@ function getCropImageStyle(crop: CropSettings) {
   const height = 10000 / visibleHeight;
   const left = (-crop.left / visibleWidth) * 100;
   const top = (-crop.top / visibleHeight) * 100;
-
   return {
     width: `${width}%`,
     height: `${height}%`,
