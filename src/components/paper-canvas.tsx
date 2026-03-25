@@ -30,15 +30,17 @@ export function PaperCanvas({
     if (!el) return;
 
     const compute = (stageW: number, stageH: number) => {
+      // Desktop: paper-stage is content-sized so stageH is circular — let CSS handle it
+      if (window.innerWidth > 720) {
+        setFitSize(null);
+        return;
+      }
       if (stageW <= 0 || stageH <= 0) return;
 
       const isLandscape = orientation === "landscape";
-      // ratio = paperWidth / paperHeight
       const ratio = isLandscape ? 1123 / 794 : 794 / 1123;
-      // Cap at actual paper pixel dimensions (no upscale beyond real size)
-      const maxW = isLandscape ? 1123 : 794;
-      const pad = 12;
-      const aw = Math.min(stageW - pad, maxW);
+      const pad = 10;
+      const aw = stageW - pad;
       const ah = stageH - pad;
 
       // Fit by width first; if too tall, fit by height instead
