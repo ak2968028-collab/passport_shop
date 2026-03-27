@@ -436,9 +436,7 @@ export function PhotoPrintStudio() {
                     {bgRemoving ? "Removing…" : "Remove Background"}
                   </button>
                   {bgError && <p className="bg-error-text">{bgError}</p>}
-                  <p className="helper-text">
-                    Powered by remove.bg — add <code>REMOVE_BG_API_KEY</code> to <code>.env.local</code>.
-                  </p>
+                  
                 </div>
               )}
 
