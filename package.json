@@ -11,7 +11,8 @@
   "dependencies": {
     "next": "15.2.8",
     "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@types/estree": "1.0.6",

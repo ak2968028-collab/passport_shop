@@ -21,7 +21,7 @@ const DEFAULT_SETTINGS: PrintSettings = {
 
 const DEFAULT_CROP: CropSettings = { top: 0, right: 0, bottom: 0, left: 0 };
 
-type SettingsTab = "count" | "paper" | "border" | "print";
+type SettingsTab = "count" | "paper" | "border" | "print" | "bg";
 
 // ─── Icons ───────────────────────────────────────────────
 function GridIcon() {
@@ -72,6 +72,16 @@ function CamIcon() {
   );
 }
 
+function BgRemoveIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="8" cy="6" r="2.5"/>
+      <path d="M3 14c0-2.5 2.2-4.5 5-4.5s5 2 5 4.5"/>
+      <line x1="1" y1="1" x2="15" y2="15"/>
+    </svg>
+  );
+}
+
 function UploadIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -101,6 +111,8 @@ export function PhotoPrintStudio() {
   const [crop, setCrop] = useState<CropSettings>(DEFAULT_CROP);
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<SettingsTab>("count");
+  const [bgRemoving, setBgRemoving] = useState(false);
+  const [bgError, setBgError] = useState<string | null>(null);
   const [customQty, setCustomQty] = useState<string>("");
   const { items, paper, moveItem, resetLayout } = usePaperLayout(settings);
 
@@ -142,6 +154,32 @@ export function PhotoPrintStudio() {
   const stepBorder = (delta: number) => {
     const next = Math.round((settings.borderWidth + delta) * 10) / 10;
     updateSettings("borderWidth", Math.min(20, Math.max(0, next)));
+  };
+
+  const handleRemoveBg = async () => {
+    if (!imageUrl) return;
+    setBgRemoving(true);
+    setBgError(null);
+    try {
+      const blob = await fetch(imageUrl).then((r) => r.blob());
+      const form = new FormData();
+      form.append("image", blob, "photo.png");
+      const res = await fetch("/api/remove-bg", { method: "POST", body: form });
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(error);
+      }
+      const resultBlob = await res.blob();
+      setImageUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return URL.createObjectURL(resultBlob);
+      });
+      setCrop({ top: 0, right: 0, bottom: 0, left: 0 });
+    } catch (err) {
+      setBgError(err instanceof Error ? err.message : "Background removal failed.");
+    } finally {
+      setBgRemoving(false);
+    }
   };
 
   const handlePrint = () => window.print();
@@ -237,7 +275,7 @@ export function PhotoPrintStudio() {
           {/* ── Settings Panel ── */}
           <aside className="panel controls-panel settings-panel">
             <div className="settings-tabbar">
-              {(["count", "paper", "border", "print"] as SettingsTab[]).map((tab) => (
+              {(["count", "paper", "border", "print", "bg"] as SettingsTab[]).map((tab) => (
                 <button
                   key={tab}
                   className={`settings-tab ${activeTab === tab ? "active" : ""}`}
@@ -249,9 +287,10 @@ export function PhotoPrintStudio() {
                     {tab === "paper"  && <DocIcon />}
                     {tab === "border" && <FrameIcon />}
                     {tab === "print"  && <PrinterIcon />}
+                    {tab === "bg"     && <BgRemoveIcon />}
                   </span>
                   <span className="settings-tab-text">
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    {tab === "bg" ? "BG" : tab.charAt(0).toUpperCase() + tab.slice(1)}
                   </span>
                 </button>
               ))}
@@ -382,6 +421,24 @@ export function PhotoPrintStudio() {
                       >+</button>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* ── BG tab ── */}
+              {activeTab === "bg" && (
+                <div className="field-grid">
+                  <button
+                    className="primary-button"
+                    type="button"
+                    disabled={!imageUrl || bgRemoving}
+                    onClick={handleRemoveBg}
+                  >
+                    {bgRemoving ? "Removing…" : "Remove Background"}
+                  </button>
+                  {bgError && <p className="bg-error-text">{bgError}</p>}
+                  <p className="helper-text">
+                    Powered by remove.bg — add <code>REMOVE_BG_API_KEY</code> to <code>.env.local</code>.
+                  </p>
                 </div>
               )}
 
