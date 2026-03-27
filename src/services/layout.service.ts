@@ -19,8 +19,8 @@ const PAPER_PRESETS: Record<PaperSize, PaperDimensions> = {
 const SHEET_GAP = 8;
 const MIN_PRINT_MARGIN = 0.13 * 96;
 
-// 3.5 × 4.5 cm at 96 dpi  (35 × 45 mm = standard passport size)
-// Image upload resolution recommendation: 630 × 810 px ≈ 457 dpi
+// Standard passport size: 3.5 × 4.5 cm at 96 dpi (35 × 45 mm)
+// Recommended image upload resolution: 630 × 810 px (≈ 457 dpi)
 const PASSPORT_SIZE = { width: 132, height: 170 };
 
 export function getPaperDimensions(
@@ -33,40 +33,22 @@ export function getPaperDimensions(
     : { width: base.height, height: base.width };
 }
 
-function maxColsForPaper(paper: PaperDimensions, safeMargin: number): number {
-  const inner = paper.width - safeMargin * 2;
-  return Math.max(1, Math.floor((inner + SHEET_GAP) / (PASSPORT_SIZE.width + SHEET_GAP)));
-}
-
 /**
- * Return the largest divisor of `quantity` that is ≤ maxCols.
- * Produces equal-row layouts: 8 → 4 cols (4+4), 6 → 6 (single row),
- * 10 → 5 (5+5), 12 → 6 (6+6), etc.
+ * Find the largest divisor of `quantity` in the 3–6 column range.
+ * This keeps all rows equal and avoids very wide or very narrow grids.
+ *
+ * Results for preset quantities:
+ *   4 → 4 cols (1 row)   6 → 6 cols (1 row)
+ *   8 → 4 cols (2 rows)  10 → 5 cols (2 rows)
+ *  12 → 6 cols (2 rows)  16 → 4 cols (4 rows)
+ *  20 → 5 cols (4 rows)
  */
-function bestColumns(quantity: number, maxCols: number): number {
-  for (let cols = Math.min(quantity, maxCols); cols >= 1; cols--) {
+function balancedCols(quantity: number): number {
+  for (let cols = 6; cols >= 3; cols--) {
     if (quantity % cols === 0) return cols;
   }
-  return 1;
-}
-
-/**
- * Choose portrait unless the photos would fill exactly one row on landscape
- * but overflow portrait — i.e. landscape is the only way to get a single row.
- * Example: 6 photos on A4 → portrait maxCols=5, landscape maxCols=7 → landscape.
- *          8 photos on A4 → landscape maxCols=7 < 8 → stays portrait (4+4).
- */
-export function getOptimalOrientation(
-  quantity: number,
-  paperSize: PaperSize,
-  margin: number
-): PaperOrientation {
-  const safeMargin = Math.max(MIN_PRINT_MARGIN, margin);
-  const portrait  = getPaperDimensions(paperSize, "portrait");
-  const landscape = getPaperDimensions(paperSize, "landscape");
-  const maxP = maxColsForPaper(portrait,  safeMargin);
-  const maxL = maxColsForPaper(landscape, safeMargin);
-  return (quantity > maxP && quantity <= maxL) ? "landscape" : "portrait";
+  // Fallback for primes / unusual numbers
+  return Math.min(quantity, 4);
 }
 
 export function createInitialLayout(
@@ -77,10 +59,15 @@ export function createInitialLayout(
   if (quantity <= 0) return [];
 
   const safeMargin = Math.max(MIN_PRINT_MARGIN, margin);
-  const { width, height } = PASSPORT_SIZE;
+  const innerWidth  = paper.width - safeMargin * 2;
 
-  const maxCols = maxColsForPaper(paper, safeMargin);
-  const cols    = bestColumns(quantity, maxCols);
+  const cols = balancedCols(quantity);
+
+  // Scale photo width so `cols` photos always fit in innerWidth.
+  // If standard size already fits, no scaling happens (min keeps it at PASSPORT_SIZE.width).
+  const scaledW  = Math.floor((innerWidth - (cols - 1) * SHEET_GAP) / cols);
+  const photoW   = Math.min(PASSPORT_SIZE.width, scaledW);
+  const photoH   = Math.round(photoW * PASSPORT_SIZE.height / PASSPORT_SIZE.width);
 
   const startX = safeMargin;
   const startY = safeMargin;
@@ -91,10 +78,10 @@ export function createInitialLayout(
 
     return {
       id: `photo-${index + 1}`,
-      x: startX + col * (width + SHEET_GAP),
-      y: startY + row * (height + SHEET_GAP),
-      width,
-      height,
+      x: startX + col * (photoW + SHEET_GAP),
+      y: startY + row * (photoH + SHEET_GAP),
+      width:  photoW,
+      height: photoH,
       imageOffsetX: 50,
       imageOffsetY: 50
     };

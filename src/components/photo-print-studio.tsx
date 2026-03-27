@@ -3,7 +3,6 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import { usePaperLayout } from "@/hooks/use-paper-layout";
 import { getObjectUrl } from "@/services/image.service";
-import { getOptimalOrientation } from "@/services/layout.service";
 import { CropSettings, PaperOrientation, PaperSize, PrintSettings } from "@/types/photo";
 import { CropModal } from "./crop-modal";
 import { PaperCanvas } from "./paper-canvas";
@@ -131,11 +130,7 @@ export function PhotoPrintStudio() {
   };
 
   const applyQuantity = (qty: number) => {
-    setSettings((s) => ({
-      ...s,
-      quantity: qty,
-      orientation: getOptimalOrientation(qty, s.paperSize, s.margin)
-    }));
+    updateSettings("quantity", qty);
   };
 
   const handleCustomQty = (raw: string) => {
@@ -307,11 +302,7 @@ export function PhotoPrintStudio() {
                       value={settings.paperSize}
                       onChange={(e) => {
                         const ps = e.target.value as PaperSize;
-                        setSettings((s) => ({
-                          ...s,
-                          paperSize: ps,
-                          orientation: getOptimalOrientation(s.quantity, ps, s.margin)
-                        }));
+                        updateSettings("paperSize", ps);
                       }}
                     >
                       <optgroup label="ISO">
