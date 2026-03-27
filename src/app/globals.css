@@ -1008,18 +1008,29 @@ button {
     margin: 0;
   }
 
-  *,
-  *::before,
-  *::after {
-    box-shadow: none !important;
-  }
-
   body {
     margin: 0;
     padding: 0;
     background: white;
   }
 
+  /* Flatten all containers so they don't add any margin, padding, or grid constraints */
+  .studio-shell,
+  .studio-frame,
+  .studio-grid,
+  .workspace-panel,
+  .paper-stage {
+    display: block;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  /* Hide everything that isn't the paper */
   .studio-header,
   .controls-panel,
   .workspace-topbar,
@@ -1028,17 +1039,20 @@ button {
     display: none !important;
   }
 
-  /* Pin the paper sheet to the exact top-left corner of the printed page
-     using its own physical mm dimensions so it matches the preview 1-to-1. */
+  /* Render at the exact pixel dimensions used by the layout engine.
+     96 CSS px = 1 inch, so paper.width/height px maps to the correct physical size.
+     margin: 0 removes the default "margin: 0 auto" centering. */
   .paper-sheet,
   .paper-sheet.landscape {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: var(--pw) !important;
-    height: var(--ph) !important;
+    position: relative !important;
+    width: var(--pw-px) !important;
+    height: var(--ph-px) !important;
     margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
     border-radius: 0 !important;
+    box-shadow: none !important;
     aspect-ratio: unset !important;
+    overflow: visible !important;
   }
 }

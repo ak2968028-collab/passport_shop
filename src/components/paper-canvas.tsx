@@ -120,8 +120,8 @@ export function PaperCanvas({
         ref={paperRef}
         className={`paper-sheet ${orientation === "landscape" ? "landscape" : ""}`}
         style={{
-          "--pw": `${(paper.width  / 96 * 25.4).toFixed(2)}mm`,
-          "--ph": `${(paper.height / 96 * 25.4).toFixed(2)}mm`,
+          "--pw-px": `${paper.width}px`,
+          "--ph-px": `${paper.height}px`,
           ...(fitSize ? { width: fitSize.width, height: fitSize.height } : {})
         } as React.CSSProperties}
       >
