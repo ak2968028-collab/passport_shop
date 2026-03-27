@@ -31,23 +31,11 @@ export function getPaperDimensions(
 }
 
 /**
- * Find the column count that fills each row completely (no wasted slots).
- * Prefers more columns (fewer rows) to match landscape orientation.
+ * Always use the maximum columns that fit on the paper.
+ * This keeps photos in a single row whenever possible.
  */
 function bestColumns(quantity: number, maxCols: number): number {
-  let best = Math.min(quantity, maxCols);
-  let bestWaste = Infinity;
-
-  for (let cols = Math.min(quantity, maxCols); cols >= 1; cols--) {
-    const rows = Math.ceil(quantity / cols);
-    const waste = cols * rows - quantity;
-    if (waste < bestWaste) {
-      bestWaste = waste;
-      best = cols;
-    }
-    if (waste === 0) break; // perfect fit found — prefer highest cols (we iterate high→low)
-  }
-  return best;
+  return Math.min(quantity, maxCols);
 }
 
 export function createInitialLayout(
@@ -64,9 +52,8 @@ export function createInitialLayout(
   const maxCols = Math.max(1, Math.floor((innerWidth + SHEET_GAP) / (width + SHEET_GAP)));
   const cols = bestColumns(quantity, maxCols);
 
-  // Center the photo grid horizontally on the paper
   const gridWidth = cols * width + (cols - 1) * SHEET_GAP;
-  const startX = (paper.width - gridWidth) / 2;
+  const startX = safeMargin;
   const startY = safeMargin;
 
   return Array.from({ length: quantity }, (_, index) => {
