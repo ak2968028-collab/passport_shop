@@ -11,6 +11,16 @@ interface PaperCanvasProps {
   crop: CropSettings;
   borderColor: string;
   borderWidth: number;
+  onMoveItem: (id: string, x: number, y: number) => void;
+}
+
+interface DragState {
+  id: string;
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startItemX: number;
+  startItemY: number;
 }
 
 export function PaperCanvas({
@@ -20,9 +30,13 @@ export function PaperCanvas({
   orientation,
   crop,
   borderColor,
-  borderWidth
+  borderWidth,
+  onMoveItem
 }: PaperCanvasProps) {
   const stageRef = useRef<HTMLDivElement>(null);
+  const paperRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<DragState | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
   const [fitSize, setFitSize] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
@@ -30,7 +44,6 @@ export function PaperCanvas({
     if (!el) return;
 
     const compute = (stageW: number, stageH: number) => {
-      // Desktop: paper-stage is content-sized so stageH is circular — let CSS handle it
       if (window.innerWidth > 720) {
         setFitSize(null);
         return;
@@ -43,7 +56,6 @@ export function PaperCanvas({
       const aw = stageW - pad;
       const ah = stageH - pad;
 
-      // Fit by width first; if too tall, fit by height instead
       const byWidth = { width: aw, height: aw / ratio };
       const size = byWidth.height <= ah
         ? byWidth
@@ -63,11 +75,55 @@ export function PaperCanvas({
     return () => observer.disconnect();
   }, [orientation]);
 
+  function getPaperScale() {
+    const el = paperRef.current;
+    if (!el) return { sx: 1, sy: 1 };
+    const rect = el.getBoundingClientRect();
+    return {
+      sx: paper.width / rect.width,
+      sy: paper.height / rect.height
+    };
+  }
+
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>, item: LayoutItem) {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = {
+      id: item.id,
+      pointerId: e.pointerId,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      startItemX: item.x,
+      startItemY: item.y
+    };
+    setDraggingId(item.id);
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    if (!drag || !e.currentTarget.hasPointerCapture(e.pointerId)) return;
+    const { sx, sy } = getPaperScale();
+    const dx = (e.clientX - drag.startClientX) * sx;
+    const dy = (e.clientY - drag.startClientY) * sy;
+    onMoveItem(drag.id, drag.startItemX + dx, drag.startItemY + dy);
+  }
+
+  function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    dragRef.current = null;
+    setDraggingId(null);
+  }
+
   return (
     <div ref={stageRef} className="paper-stage">
       <div
+        ref={paperRef}
         className={`paper-sheet ${orientation === "landscape" ? "landscape" : ""}`}
-        style={fitSize ? { width: fitSize.width, height: fitSize.height } : undefined}
+        style={{
+          "--pw": `${(paper.width  / 96 * 25.4).toFixed(2)}mm`,
+          "--ph": `${(paper.height / 96 * 25.4).toFixed(2)}mm`,
+          ...(fitSize ? { width: fitSize.width, height: fitSize.height } : {})
+        } as React.CSSProperties}
       >
         <div className="paper-guides" />
         {items.map((item) => (
@@ -78,8 +134,13 @@ export function PaperCanvas({
               left: `${(item.x / paper.width) * 100}%`,
               top: `${(item.y / paper.height) * 100}%`,
               width: `${(item.width / paper.width) * 100}%`,
-              height: `${(item.height / paper.height) * 100}%`
+              height: `${(item.height / paper.height) * 100}%`,
+              cursor: draggingId === item.id ? "grabbing" : "grab",
+              touchAction: "none"
             }}
+            onPointerDown={(e) => handlePointerDown(e, item)}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
           >
             {imageUrl ? (
               <div className="photo-image-wrap">

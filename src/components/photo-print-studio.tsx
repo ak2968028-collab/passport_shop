@@ -102,7 +102,7 @@ export function PhotoPrintStudio() {
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<SettingsTab>("count");
   const [customQty, setCustomQty] = useState<string>("");
-  const { items, paper, resetLayout } = usePaperLayout(settings);
+  const { items, paper, moveItem, resetLayout } = usePaperLayout(settings);
 
   useEffect(() => {
     return () => { if (imageUrl) URL.revokeObjectURL(imageUrl); };
@@ -228,6 +228,7 @@ export function PhotoPrintStudio() {
               crop={crop}
               borderColor={settings.showBorder ? settings.borderColor : "transparent"}
               borderWidth={settings.showBorder ? settings.borderWidth : 0}
+              onMoveItem={moveItem}
             />
           </section>
 

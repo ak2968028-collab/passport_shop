@@ -39,9 +39,24 @@ export function usePaperLayout(settings: PrintSettings) {
     );
   };
 
+  const moveItem = (id: string, x: number, y: number) => {
+    setItems((current) =>
+      current.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              x: Math.max(0, Math.min(paper.width - item.width, x)),
+              y: Math.max(0, Math.min(paper.height - item.height, y))
+            }
+          : item
+      )
+    );
+  };
+
   return {
     items,
     moveImage,
+    moveItem,
     paper,
     resetLayout
   };
