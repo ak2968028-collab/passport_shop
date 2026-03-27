@@ -3,6 +3,7 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import { usePaperLayout } from "@/hooks/use-paper-layout";
 import { getObjectUrl } from "@/services/image.service";
+import { getOptimalOrientation } from "@/services/layout.service";
 import { CropSettings, PaperOrientation, PaperSize, PrintSettings } from "@/types/photo";
 import { CropModal } from "./crop-modal";
 import { PaperCanvas } from "./paper-canvas";
@@ -15,7 +16,7 @@ const DEFAULT_SETTINGS: PrintSettings = {
   borderColor: "#000000",
   borderWidth: 1,
   paperSize: "A4",
-  orientation: "landscape",
+  orientation: "portrait",
   margin: 0.13 * 96
 };
 
@@ -129,12 +130,18 @@ export function PhotoPrintStudio() {
     setCrop(DEFAULT_CROP);
   };
 
+  const applyQuantity = (qty: number) => {
+    setSettings((s) => ({
+      ...s,
+      quantity: qty,
+      orientation: getOptimalOrientation(qty, s.paperSize, s.margin)
+    }));
+  };
+
   const handleCustomQty = (raw: string) => {
     setCustomQty(raw);
     const n = parseInt(raw, 10);
-    if (!isNaN(n) && n >= 1 && n <= 50) {
-      updateSettings("quantity", n);
-    }
+    if (!isNaN(n) && n >= 1 && n <= 50) applyQuantity(n);
   };
 
   const stepBorder = (delta: number) => {
@@ -267,7 +274,7 @@ export function PhotoPrintStudio() {
                           key={opt}
                           className={`chip-button ${settings.quantity === opt && !customQty ? "active" : ""}`}
                           type="button"
-                          onClick={() => { setCustomQty(""); updateSettings("quantity", opt); }}
+                          onClick={() => { setCustomQty(""); applyQuantity(opt); }}
                         >
                           {opt}
                         </button>
@@ -298,7 +305,14 @@ export function PhotoPrintStudio() {
                     <select
                       id="paper-size"
                       value={settings.paperSize}
-                      onChange={(e) => updateSettings("paperSize", e.target.value as PaperSize)}
+                      onChange={(e) => {
+                        const ps = e.target.value as PaperSize;
+                        setSettings((s) => ({
+                          ...s,
+                          paperSize: ps,
+                          orientation: getOptimalOrientation(s.quantity, ps, s.margin)
+                        }));
+                      }}
                     >
                       <optgroup label="ISO">
                         <option value="A3">A3 (297 × 420 mm)</option>
